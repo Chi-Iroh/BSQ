@@ -1,0 +1,13 @@
+*.out
+*.log
+*.gcda
+*.gcno
+*.a
+*.o
+*.out
+*.txt
+vgcore.*
+.vscode
+bsq
+*.tgz
+mouli_maps*
