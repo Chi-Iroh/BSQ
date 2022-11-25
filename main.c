@@ -11,11 +11,10 @@
 int main(int argc, char *argv[])
 {
     char **map = get_map(argc, argv);
-    const size_t map_size = str_array_length(map);
 
-    if (check_map(map, map_size) == 84) {
+    if (!map) {
         return 84;
     }
-    bsq(map);
+    bsq(map, my_strlen(map[0]));
     return 0;
 }

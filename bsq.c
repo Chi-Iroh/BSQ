@@ -9,6 +9,7 @@
 #include "bsq.h"
 #include <my_macros.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 static unsigned **convert_map(char **const map, size_t line_size)
 {
@@ -16,9 +17,6 @@ static unsigned **convert_map(char **const map, size_t line_size)
 
     for (size_t i = 0; map[i]; i++) {
         uint_map[i] = malloc(sizeof(unsigned) * line_size);
-        for (size_t j = 0; j < line_size; j++) {
-            uint_map[i][j] = 0;
-        }
     }
     return uint_map;
 
@@ -45,10 +43,9 @@ replace_val(char **map, unsigned **uint_map, square_t *max, coords_t coords)
     }
 }
 
-static square_t get_max_square(char **map)
+static square_t get_max_square(char **map, size_t line_length)
 {
-    const size_t line_size = my_strlen(map[0]);
-    unsigned **uint_map = convert_map(map, line_size);
+    unsigned **uint_map = convert_map(map, line_length);
     square_t max_square = {0, 0, 0};
 
     for (size_t i = 0; map[i]; i++) {
@@ -63,28 +60,25 @@ static square_t get_max_square(char **map)
     return max_square;
 }
 
-static void insert_square(char **map)
+static void insert_square(char **map, const square_t *const square)
 {
-    const char c = map[coords.i][coords.j];
-    int is_in_square = 0;
+    const size_t start_i = square->i - (square->max_square - 1);
+    const size_t start_j = square->j - (square->max_square - 1);
 
-    if (c == 'o') {
-        return c;
+    for (size_t i = start_i; i <= square->i; i++) {
+        for (size_t j = start_j; j <= square->j; j++) {
+            map[i][j] = 'x';
+        }
     }
-    is_in_square = square->i - coords.i < square->max_square;
-    is_in_square &= square->j - coords.j < square->max_square;
-    return is_in_square ? 'x' : '.';
 }
 
-void bsq(char **map)
+void bsq(char **map, size_t line_length)
 {
-    const square_t max_square = get_max_square(map);
-    insert_square(map);
+    const square_t max_square = get_max_square(map, line_length);
+    insert_square(map, &max_square);
 
     for (size_t i = 0; map[i]; i++) {
-        for (size_t j = 0; map[i][j]; j++) {
-            my_putchar(map[i][j]);
-        }
+        write(STDOUT_FILENO, map[i], line_length);
         free(map[i]);
         my_putchar('\n');
     }

@@ -5,6 +5,7 @@
 ** -> reads the map from file given as param
 */
 
+#include "bsq.h"
 #include <my.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -25,58 +26,54 @@ static size_t get_map_dimensions_from_file(int fd)
     return n;
 }
 
-static char *read_line(int fd)
+static line_t make_line(size_t length, char *line)
 {
-    char *buffer = NULL;
-    char c = '\0';
-    int is_ok = 1;
+    return (line_t) {
+        .length = length,
+        .line = line
+    };
+}
 
-    while (1) {
+static line_t read_line(int fd)
+{
+    char *buffer = malloc(sizeof(char) * 10001);
+    char *const buffer_start = buffer;
+    int is_ok = 1;
+    char c = '\0';
+    size_t length = 0;
+
+    do {
         is_ok |= read(fd, &c, 1) == 1;
         if (!is_ok || c == '\n') {
             break;
         }
-        buffer = str_append(buffer, c);
+        *buffer++ = c;
+    } while (++length);
+    *buffer = '\0';
+    if (!is_ok && buffer_start) {
+        free(buffer_start);
+        return make_line(0, NULL);
     }
-    if (!is_ok && buffer) {
-        free(buffer);
-        buffer = NULL;
-    }
-    return buffer;
+    return make_line(length, buffer_start);
 }
 
-static int is_map_valid(char **map, size_t dimensions)
+static int add_line(char **file_buffer, line_t line, size_t i)
 {
-    int is_ok = map != NULL;
-    const size_t str_length = map ? my_strlen(map[0]) : 0;
+    static size_t first_length = 0;
 
-    for (size_t i = 0; i < dimensions; i++) {
-        is_ok &= map[i] != NULL;
-        for (size_t j = 0; map[i][j] && !is_ok; j++) {
-            is_ok &= map[i][j] != 'o' && map[i][j] != '.';
-        }
-        if (!is_ok) {
-            break;
-        }
-        is_ok &= my_strlen(map[i]) == str_length;
+    if (i == 0) {
+        first_length = line.length;
     }
-    return is_ok ? 0 : 84;
-}
-
-int check_map(char **map, size_t dimensions)
-{
-    if (is_map_valid(map, dimensions) == 0) {
+    if (i > 0 && line.length != first_length) {
         return 0;
     }
-    for (size_t i = 0; map && i < dimensions; i++) {
-        if (map[i]) {
-            free(map[i]);
+    for (size_t i = 0; line.line[i]; i++) {
+        if (line.line[i] != '.' && line.line[i] != 'o') {
+            return 0;
         }
     }
-    if (map) {
-        free(map);
-    }
-    return 84;
+    file_buffer[i] = line.line;
+    return 1;
 }
 
 char **read_from_file(char *file_path)
@@ -88,8 +85,12 @@ char **read_from_file(char *file_path)
     if (fd == -1 || errno != 0) {
         return NULL;
     }
+    file_buffer = str_array_init(dimensions + 1);
     for (size_t i = 0; i < dimensions; i++) {
-        file_buffer = str_array_append(file_buffer, read_line(fd));
+        if (!add_line(file_buffer, read_line(fd), i)) {
+            str_array_free(file_buffer, dimensions);
+            return NULL;
+        }
     }
-    return check_map(file_buffer, dimensions) == 84 ? NULL : file_buffer;
+    return file_buffer;
 }

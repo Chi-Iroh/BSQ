@@ -168,6 +168,8 @@ char **str_array_extend(char **array, char **add);
 
 char **str_array_init(size_t n_strings);
 
+void str_array_free(char **array, size_t length);
+
 // not implemented
 
 void my_sort_int_array(int *tab, int size);

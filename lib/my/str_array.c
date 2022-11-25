@@ -5,13 +5,6 @@
 ** -> functions to work with arrays of strings
 */
 
-/*
-** EPITECH PROJECT, 2022
-** string_array.c
-** File description:
-** -> functions for manipulating arrays of strings
-*/
-
 #include "my.h"
 #include <stdlib.h>
 
