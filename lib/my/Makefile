@@ -5,7 +5,7 @@
 ## Wno-unused-parameter for unimplemented functions
 ##
 
-CFLAGS	+=	-Wall -Wextra -pedantic -g3 -Wno-unused-parameter
+CFLAGS	+=	-Wall -Wextra -pedantic -O2 -Wno-unused-parameter
 
 SRC	=	my_strcat.c 				        	\
 		my_convert_nbr_base.c 	        		\

@@ -11,30 +11,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static unsigned **convert_map(char **const map, size_t line_size)
-{
-    unsigned **uint_map = malloc(sizeof(unsigned *) * str_array_length(map));
-
-    for (size_t i = 0; map[i]; i++) {
-        uint_map[i] = malloc(sizeof(unsigned) * line_size);
-    }
-    return uint_map;
-
-}
-
 static void
-replace_val(char **map, unsigned **uint_map, square_t *max, coords_t coords)
+replace_val(unsigned **map, square_t *max, coords_t coords)
 {
-    unsigned *val = &uint_map[coords.i][coords.j];
+    unsigned *val = &map[coords.i][coords.j];
 
-    if (map[coords.i][coords.j] == 'o') {
+    if (*val == 'o') {
         *val = 0;
     } else if (coords.i == 0 || coords.j == 0) {
         *val = 1;
     } else {
-        *val = uint_map[coords.i][coords.j - 1];
-        *val = MIN(*val, uint_map[coords.i - 1][coords.j - 1]);
-        *val = MIN(*val, uint_map[coords.i - 1][coords.j]) + 1;
+        *val = map[coords.i][coords.j - 1];
+        *val = MIN(*val, map[coords.i - 1][coords.j - 1]);
+        *val = MIN(*val, map[coords.i - 1][coords.j]) + 1;
     }
     if (max->max_square < *val) {
         max->i = coords.i;
@@ -43,24 +32,19 @@ replace_val(char **map, unsigned **uint_map, square_t *max, coords_t coords)
     }
 }
 
-static square_t get_max_square(char **map, size_t line_length)
+static square_t get_max_square(unsigned **map)
 {
-    unsigned **uint_map = convert_map(map, line_length);
     square_t max_square = {0, 0, 0};
 
     for (size_t i = 0; map[i]; i++) {
-        for (size_t j = 0; map[i][j]; j++) {
-            replace_val(map, uint_map, &max_square, (coords_t){i, j});
+        for (size_t j = 0; map[i][j] != LINE_END; j++) {
+            replace_val(map, &max_square, (coords_t){i, j});
         }
     }
-    for (size_t i = 0; map[i]; i++) {
-        free(uint_map[i]);
-    }
-    free(uint_map);
     return max_square;
 }
 
-static void insert_square(char **map, const square_t *const square)
+static void insert_square(unsigned **map, const square_t *const square)
 {
     const size_t start_i = square->i - (square->max_square - 1);
     const size_t start_j = square->j - (square->max_square - 1);
@@ -72,15 +56,32 @@ static void insert_square(char **map, const square_t *const square)
     }
 }
 
-void bsq(char **map, size_t line_length)
+static void display_and_free(unsigned **map)
 {
-    const square_t max_square = get_max_square(map, line_length);
-    insert_square(map, &max_square);
+    char *buffer = malloc(sizeof(char) * 10000 * 10001);
+    size_t index = 0;
+    size_t i = 0;
+    size_t max_j = 0;
+    size_t j = 0;
+    char c = '\0';
 
-    for (size_t i = 0; map[i]; i++) {
-        write(STDOUT_FILENO, map[i], line_length);
-        free(map[i]);
-        my_putchar('\n');
+    for (; map[i]; i++) {
+        for (j = 0; map[i][j] != LINE_END; j++) {
+            c = map[i][j];
+            buffer[index++] = ((c == 0) ? 'o' : ((c == 'x') ? 'x' : '.'));
+        }
+        max_j = j + 1;
+        buffer[index++] = '\n';
     }
-    free(map);
+    write(STDOUT_FILENO, buffer, i * max_j);
+    free(buffer);
+    FREE_ARRAY(map);
+}
+
+void bsq(unsigned **map)
+{
+    const square_t max_square = get_max_square(map);
+
+    insert_square(map, &max_square);
+    display_and_free(map);
 }

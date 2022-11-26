@@ -26,7 +26,7 @@ static size_t get_map_dimensions_from_file(int fd)
     return n;
 }
 
-static line_t make_line(size_t length, char *line)
+static line_t make_line(size_t length, unsigned *line)
 {
     return (line_t) {
         .length = length,
@@ -36,8 +36,8 @@ static line_t make_line(size_t length, char *line)
 
 static line_t read_line(int fd)
 {
-    char *buffer = malloc(sizeof(char) * 10001);
-    char *const buffer_start = buffer;
+    unsigned *buffer = malloc(sizeof(unsigned) * 10001);
+    unsigned *const buffer_start = buffer;
     int is_ok = 1;
     char c = '\0';
     size_t length = 0;
@@ -49,7 +49,7 @@ static line_t read_line(int fd)
         }
         *buffer++ = c;
     } while (++length);
-    *buffer = '\0';
+    *buffer = LINE_END;
     if (!is_ok && buffer_start) {
         free(buffer_start);
         return make_line(0, NULL);
@@ -57,7 +57,7 @@ static line_t read_line(int fd)
     return make_line(length, buffer_start);
 }
 
-static int add_line(char **file_buffer, line_t line, size_t i)
+static int add_line(unsigned **file_buffer, line_t line, size_t i)
 {
     static size_t first_length = 0;
 
@@ -67,7 +67,7 @@ static int add_line(char **file_buffer, line_t line, size_t i)
     if (i > 0 && line.length != first_length) {
         return 0;
     }
-    for (size_t i = 0; line.line[i]; i++) {
+    for (size_t i = 0; line.line[i] != LINE_END; i++) {
         if (line.line[i] != '.' && line.line[i] != 'o') {
             return 0;
         }
@@ -76,19 +76,20 @@ static int add_line(char **file_buffer, line_t line, size_t i)
     return 1;
 }
 
-char **read_from_file(char *file_path)
+unsigned **read_from_file(char *file_path)
 {
     int fd = open(file_path, O_RDONLY);
     size_t dimensions = get_map_dimensions_from_file(fd);
-    char **file_buffer = NULL;
+    unsigned **file_buffer = NULL;
 
     if (fd == -1 || errno != 0) {
         return NULL;
     }
-    file_buffer = str_array_init(dimensions + 1);
+    file_buffer = malloc(sizeof(unsigned *) * (dimensions + 1));
+    file_buffer[dimensions] = NULL;
     for (size_t i = 0; i < dimensions; i++) {
         if (!add_line(file_buffer, read_line(fd), i)) {
-            str_array_free(file_buffer, dimensions);
+            FREE_ARRAY_SIZE(file_buffer, dimensions);
             return NULL;
         }
     }

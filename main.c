@@ -10,11 +10,11 @@
 
 int main(int argc, char *argv[])
 {
-    char **map = get_map(argc, argv);
+    unsigned **map = get_map(argc, argv);
 
     if (!map) {
         return 84;
     }
-    bsq(map, my_strlen(map[0]));
+    bsq(map);
     return 0;
 }

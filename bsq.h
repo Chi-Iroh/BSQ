@@ -9,13 +9,15 @@
 
 #include <stddef.h>
 
-char **read_from_file(char *file_path);
+#define LINE_END ((unsigned)-1)
 
-char **get_map(int argc, char *argv[]);
+unsigned **read_from_file(char *file_path);
 
-int check_map(char **map, size_t dimensions);
+unsigned**get_map(int argc, char *argv[]);
 
-void bsq(char **map, size_t line_length);
+int check_map(unsigned **map, size_t dimensions);
+
+void bsq(unsigned **map);
 
 typedef struct {
     unsigned max_square;
@@ -29,6 +31,6 @@ typedef struct {
 } coords_t;
 
 typedef struct {
-    char *line;
+    unsigned *line;
     size_t length;
 } line_t;

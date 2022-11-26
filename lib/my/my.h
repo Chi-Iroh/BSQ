@@ -12,6 +12,26 @@
 #include <stdarg.h>
 #include <stdint.h>
 
+#define FREE_ARRAY(array) {                                 \
+        for (size_t i = 0; (array) && (array)[i]; i++) {    \
+        free((array)[i]);                                   \
+        }                                                   \
+        if ((array)) {                                      \
+            free((array));                                  \
+        }                                                   \
+    }
+
+#define FREE_ARRAY_SIZE(array, size) {                      \
+        for (size_t i = 0; (array) && i < (size); i++) {    \
+            if ((array)[i]) {                               \
+                free((array)[i]);                           \
+            }                                               \
+        }                                                   \
+        if ((array)) {                                      \
+            free((array));                                  \
+        }                                                   \
+    }
+
 char *my_calloc(size_t length);
 
 int my_abs(int n);

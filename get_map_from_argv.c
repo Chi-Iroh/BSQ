@@ -9,26 +9,29 @@
 #include "bsq.h"
 #include <stdlib.h>
 
-static char **split_map(char *const map, size_t dimensions)
+static unsigned **split_map(unsigned *const map, size_t dimensions)
 {
-    char **map_buffer = str_array_init(dimensions + 1);
-    char *map_iter = map;
+    unsigned **map_buffer = malloc(sizeof(unsigned *) * (dimensions + 1));
+    unsigned *map_iter = map;
 
+    map_buffer[dimensions] = NULL;
     for (size_t i = 0; i < dimensions; i++) {
-        map_buffer[i] = my_calloc(dimensions + 1);
-        my_strncpy(map_buffer[i], map_iter, dimensions);
-        map_iter += dimensions;
+        map_buffer[i] = malloc(sizeof(unsigned) * (dimensions + 1));
+        for (size_t j = 0; j < dimensions; j++) {
+            map_buffer[i][j] = *map_iter++;
+        }
+        map_buffer[i][dimensions] = LINE_END;
     }
     free(map);
     return map_buffer;
 }
 
-static char **generator(size_t dimensions, char *const pattern)
+static unsigned **generator(size_t dimensions, char *const pattern)
 {
     size_t pattern_index = 0;
     const size_t pattern_length = my_strlen(pattern);
-    char *buffer = my_calloc(dimensions * dimensions + 1);
-    char *const buffer_start = buffer;
+    unsigned *buffer = malloc(sizeof(unsigned) * (dimensions * dimensions + 1));
+    unsigned *const buffer_start = buffer;
 
     for (size_t i = 0; i < dimensions; i++) {
         for (size_t j = 0; j < dimensions; j++) {
@@ -36,10 +39,11 @@ static char **generator(size_t dimensions, char *const pattern)
             pattern_index = (pattern_index + 1) % pattern_length;
         }
     }
+    *buffer = LINE_END;
     return split_map(buffer_start, dimensions);
 }
 
-char **get_map(int argc, char *argv[])
+unsigned **get_map(int argc, char *argv[])
 {
     if (argc == 2) {
         return read_from_file(argv[1]);
