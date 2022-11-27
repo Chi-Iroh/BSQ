@@ -5,7 +5,7 @@
 ## Makefile
 ##
 
-CFLAGS	+=	-Wall -Wextra -pedantic -g3 -I ./include
+CFLAGS	+=	-Wall -Wextra -pedantic -O2 -I ./include
 
 SRC = 	get_map_from_argv.c \
 		get_map_from_file.c \
